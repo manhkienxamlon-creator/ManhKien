@@ -1,0 +1,178 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "By ManhKienBG",
+   LoadingTitle = "Script Đã Sẵn Sàng...",
+   LoadingSubtitle = "By ManhKienBG",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "ManhKienBG_Config"
+   }
+})
+
+-- Thông báo tiếng Việt ĐỘC QUYỀN
+Rayfield:Notify({
+   Title = "By ManhKienBG",
+   Content = "Follow Tiktok @manhkienbg01 để nhận dc script ĐỘC QUYỀN nhé",
+   Duration = 10,
+   Image = 4483362458,
+})
+
+-- Biến cấu hình
+_G.Speed = 16
+_G.Jump = 50
+_G.HitboxSize = 2
+_G.GodMode = false
+_G.InfJump = false
+_G.Noclip = false
+_G.ESP = false
+_G.FullBright = false
+
+-- Vòng lặp duy trì stats & Light (Anti-Reset)
+task.spawn(function()
+    while true do
+        local p = game.Players.LocalPlayer
+        local char = p.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.WalkSpeed = _G.Speed
+                hum.JumpPower = _G.Jump
+                if _G.GodMode then
+                    hum.MaxHealth = 1e18
+                    hum.Health = 1e18
+                end
+            end
+            if _G.Noclip then
+                for _, v in pairs(char:GetDescendants()) do
+                    if v:IsA("BasePart") then v.CanCollide = false end
+                end
+            end
+        end
+        
+        -- Xử lý phát sáng toàn Server (FullBright)
+        if _G.FullBright then
+            game:GetService("Lighting").Brightness = 2
+            game:GetService("Lighting").ClockTime = 14
+            game:GetService("Lighting").FogEnd = 100000
+            game:GetService("Lighting").GlobalShadows = false
+            game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
+        end
+        
+        task.wait(0.1)
+    end
+end)
+
+-- Infinite Jump
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if _G.InfJump then
+        local p = game.Players.LocalPlayer
+        if p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
+            p.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+        end
+    end
+end)
+
+-- Hitbox & ESP (Khóa cứng)
+task.spawn(function()
+    while true do
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if v ~= game.Players.LocalPlayer and v.Character then
+                local root = v.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    root.Size = Vector3.new(_G.HitboxSize, _G.HitboxSize, _G.HitboxSize)
+                    root.Transparency = 0.7
+                    root.CanCollide = false
+                end
+                
+                if _G.ESP and not v.Character:FindFirstChild("ESPHighlight") then
+                    local hl = Instance.new("Highlight", v.Character)
+                    hl.Name = "ESPHighlight"
+                    task.spawn(function()
+                        while hl.Parent and _G.ESP do
+                            hl.FillColor = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+                            task.wait()
+                        end
+                        if hl then hl:Destroy() end
+                    end)
+                end
+            end
+        end
+        task.wait(0.5)
+    end
+end)
+
+-- Tab: Player Settings
+local MainTab = Window:CreateTab("Player Settings", 4483362458)
+
+MainTab:CreateSlider({
+   Name = "WalkSpeed",
+   Range = {1, 250},
+   Increment = 1,
+   CurrentValue = 16,
+   Callback = function(v) _G.Speed = v end
+})
+
+MainTab:CreateSlider({
+   Name = "JumpPower",
+   Range = {1, 500},
+   Increment = 1,
+   CurrentValue = 50,
+   Callback = function(v) _G.Jump = v end
+})
+
+MainTab:CreateSlider({
+   Name = "Hitbox Size",
+   Range = {1, 100},
+   Increment = 1,
+   CurrentValue = 2,
+   Callback = function(v) _G.HitboxSize = v end
+})
+
+-- Tab: Visual & Effects
+local VisualTab = Window:CreateTab("Visual Effects", 4483362458)
+
+VisualTab:CreateToggle({
+   Name = "Server Light (FullBright)",
+   CurrentValue = false,
+   Callback = function(v) _G.FullBright = v end
+})
+
+VisualTab:CreateToggle({
+   Name = "Rainbow ESP",
+   CurrentValue = false,
+   Callback = function(v) _G.ESP = v end
+})
+
+-- Tab: Utilities
+local UtilsTab = Window:CreateTab("Misc Utils", 4483362458)
+
+UtilsTab:CreateToggle({
+   Name = "Infinite Jump",
+   CurrentValue = false,
+   Callback = function(v) _G.InfJump = v end
+})
+
+UtilsTab:CreateToggle({
+   Name = "God Mode",
+   CurrentValue = false,
+   Callback = function(v) _G.GodMode = v end
+})
+
+UtilsTab:CreateToggle({
+   Name = "Noclip",
+   CurrentValue = false,
+   Callback = function(v) _G.Noclip = v end
+})
+
+UtilsTab:CreateButton({
+   Name = "Execute Fly V3",
+   Callback = function() 
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))() 
+      Rayfield:Notify({
+         Title = "Thông báo",
+         Content = "Đã kích hoạt Fly Menu!",
+         Duration = 3
+      })
+   end
+})
