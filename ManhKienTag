@@ -1,0 +1,138 @@
+-- Thông báo lúc mới kích hoạt script
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Tag...",
+    Text = "Đang khởi tạo hệ thống By ManhKienBG",
+    Duration = 3
+})
+
+-- Khởi tạo thư viện Rayfield
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Tạo Cửa sổ giao diện với tên của bạn và sub đổi thành ManhKienBG
+local Window = Rayfield:CreateWindow({
+   Name = "By ManhKienBG",
+   LoadingTitle = "Untitled Tag Game Hub",
+   LoadingSubtitle = "ManhKienBG",
+   ConfigurationSaving = { Enabled = false },
+   KeySystem = false
+})
+
+-- Tạo Tab chức năng
+local MainTab = Window:CreateTab("Main Features", 4483362458)
+
+-- Biến lưu trữ cấu hình
+local TargetSpeed = 16
+local HitboxSize = 2
+local InfiniteJumpEnabled = false
+local FullbrightEnabled = false
+
+-- Lưu lại cấu hình ánh sáng gốc của game để khôi phục khi tắt
+local Lighting = game:GetService("Lighting")
+local OriginalBrightness = Lighting.Brightness
+local OriginalClockTime = Lighting.ClockTime
+local OriginalGlobalShadows = Lighting.GlobalShadows
+local OriginalOutdoorAmbient = Lighting.OutdoorAmbient
+
+-- 1. THANH TRƯỢT WALK SPEED
+MainTab:CreateSlider({
+   Name = "WalkSpeed",
+   Range = {1, 100},
+   Increment = 1,
+   Suffix = " Speed",
+   CurrentValue = 16,
+   Callback = function(Value)
+       TargetSpeed = Value
+   end,
+})
+
+-- Vòng lặp ép tốc độ (RenderStepped)
+game:GetService("RunService").RenderStepped:Connect(function()
+    if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = TargetSpeed
+    end
+end)
+
+-- 2. THANH TRƯỢT HITBOX
+MainTab:CreateSlider({
+   Name = "Hitbox Size",
+   Range = {1, 100},
+   Increment = 1,
+   Suffix = " Studs",
+   CurrentValue = 2,
+   Callback = function(Value)
+       HitboxSize = Value
+   end,
+})
+
+-- Vòng lặp quét Hitbox
+task.spawn(function()
+    while task.wait(0.5) do
+        for _, player in ipairs(game.Players:GetPlayers()) do
+            if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = player.Character.HumanoidRootPart
+                if hrp.Size.X ~= HitboxSize then
+                    hrp.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+                    hrp.Transparency = 0.7 
+                    hrp.BrickColor = BrickColor.new("Really red")
+                    hrp.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- 3. BẬT/TẮT INFINITE JUMP
+MainTab:CreateToggle({
+   Name = "Infinite Jump",
+   CurrentValue = false,
+   Callback = function(Value)
+       InfiniteJumpEnabled = Value
+   end,
+})
+
+-- Xử lý nhảy vô hạn
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if InfiniteJumpEnabled then
+        local player = game.Players.LocalPlayer
+        if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+            player.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+        end
+    end
+end)
+
+-- 4. BẬT/TẮT FULLBRIGHT (LIGHT)
+MainTab:CreateToggle({
+   Name = "Fullbright",
+   CurrentValue = false,
+   Callback = function(Value)
+       FullbrightEnabled = Value
+       if not Value then
+           -- Trả về ánh sáng mặc định của game khi tắt
+           Lighting.Brightness = OriginalBrightness
+           Lighting.ClockTime = OriginalClockTime
+           Lighting.GlobalShadows = OriginalGlobalShadows
+           Lighting.OutdoorAmbient = OriginalOutdoorAmbient
+       end
+   end,
+})
+
+-- Vòng lặp giữ ánh sáng luôn sáng (Đề phòng game tự thay đổi thời gian/bản đồ)
+task.spawn(function()
+    while task.wait(1) do
+        if FullbrightEnabled then
+            Lighting.Brightness = 2
+            Lighting.ClockTime = 14
+            Lighting.GlobalShadows = false
+            Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+        end
+    end
+end)
+
+-- Thông báo sau khi script đã tải xong hoàn toàn
+Rayfield:Notify({
+   Title = "Tag Đã xog",
+   Content = "Script của ManhKienBG đã sẵn sàng sử dụng!",
+   Duration = 5,
+   Image = 4483362458,
+})
