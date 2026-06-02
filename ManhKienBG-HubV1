@@ -13,7 +13,7 @@ local Window = Rayfield:CreateWindow({
 -- Thông báo tiếng Việt ĐỘC QUYỀN
 Rayfield:Notify({
    Title = "By ManhKienBG",
-   Content = "Follow Tiktok @manhkienbg01 để nhận dc script ĐỘC QUYỀN nhé",
+   Content = "367",
    Duration = 10,
    Image = 4483362458,
 })
