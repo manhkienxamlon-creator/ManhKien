@@ -1,0 +1,112 @@
+-- Khởi tạo Rayfield UI Library
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Tạo Window chính
+local Window = Rayfield:CreateWindow({
+   Name = "ManhKienBG - Menu Hitbox V2",
+   LoadingTitle = "Đang tải ManhKienBG Hub...",
+   LoadingSubtitle = "by ManhKienBG",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "ManhKienBG_Config",
+      FileName = "HitboxHub"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "",
+      RememberJoins = true
+   },
+   KeySystem = false
+})
+
+-- Tạo Tab chức năng
+local MainTab = Window:CreateTab("Chức Năng Chính", 4483362458)
+
+-- Biến lưu trữ giá trị cấu hình
+local HitboxSize = 2
+local HitboxEnabled = false
+
+-- Hàm cập nhật Hitbox (Đã fix lỗi đứng im)
+local function UpdateHitbox()
+    while HitboxEnabled do
+        task.wait(0.3) -- Tăng tốc độ quét một chút để mượt hơn
+        
+        for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+            if player ~= game:GetService("Players").LocalPlayer then
+                pcall(function()
+                    local character = player.Character
+                    if character and character:FindFirstChild("Head") then
+                        local head = character.Head
+                        
+                        -- SỬA LỖI ĐỨNG IM TẠI ĐÂY:
+                        head.Anchored = false      -- Đảm bảo đầu không bị khóa cứng vị trí
+                        head.Massless = true       -- Triệt tiêu trọng lượng, đầu to mấy cũng không bị nặng/đơ
+                        head.CanCollide = false    -- Đi xuyên địa hình, không bị cấn vào tường/đất
+                        
+                        -- Thay đổi kích thước và độ mờ
+                        head.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+                        head.Transparency = 0.6    -- Độ mờ mờ vừa phải
+                    end
+                end)
+            end
+        end
+    end
+end
+
+-- Hàm reset Hitbox về mặc định khi tắt
+local function ResetHitbox()
+    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+        if player ~= game:GetService("Players").LocalPlayer then
+            pcall(function()
+                local character = player.Character
+                if character and character:FindFirstChild("Head") then
+                    local head = character.Head
+                    head.Size = Vector3.new(1.2, 1, 1) 
+                    head.Transparency = 0 
+                    head.Massless = false
+                    head.CanCollide = true
+                end
+            end)
+        end
+    end
+end
+
+---
+--- GIAO DIỆN MENU
+---
+
+-- 1. Bật/Tắt Hitbox
+local Toggle = MainTab:CreateToggle({
+   Name = "Bật/Tắt Hitbox Đầu",
+   CurrentValue = false,
+   Flag = "HitboxToggle",
+   Callback = function(Value)
+       HitboxEnabled = Value
+       if HitboxEnabled then
+           task.spawn(UpdateHitbox)
+       else
+           ResetHitbox()
+       end
+   end,
+})
+
+-- 2. Thanh kéo chỉnh độ to (Slider từ 1 đến 50)
+local Slider = MainTab:CreateSlider({
+   Name = "Kích Thước Đầu (Hitbox)",
+   Range = {1, 50},
+   Increment = 1,
+   Suffix = " Size",
+   CurrentValue = 2,
+   Flag = "HitboxSlider",
+   Callback = function(Value)
+       HitboxSize = Value
+   end,
+})
+
+-- Thông báo
+Rayfield:Notify({
+   Title = "ManhKienBG Fix",
+   Content = "Đã sửa lỗi đứng im! Giờ đối thủ sẽ di chuyển mượt mà.",
+   Duration = 5,
+   Image = 4483362458,
+})
