@@ -1,0 +1,131 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "KienManhX",
+   LoadingTitle = "KienManhX Fram",
+   LoadingSubtitle = "by KienManhX",
+   ConfigurationSaving = { Enabled = false },
+   KeySystem = false
+})
+
+local Tab = Window:CreateTab("KienManhX", 4483362458)
+
+local isTeleporting = false
+
+-- Hàm quét kỹ và tự động nhặt quặng
+local function teleportAndAutoCollect(oreName)
+    if isTeleporting then 
+        Rayfield:Notify({
+            Name = "KienManhX",
+            Content = "Đang farm, vui lòng đợi quay về!",
+            Duration = 2,
+            Image = 4483362458,
+        })
+        return 
+    end
+
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    
+    if not humanoidRootPart then return end
+
+    local targetOre = nil
+
+    -- QUÉT KỸ: Duyệt qua toàn bộ Workspace bao gồm cả các thư mục ẩn sâu nhất
+    for _, object in pairs(game.Workspace:GetDescendants()) do
+        if object.Name == oreName and (object:IsA("BasePart") or object:IsA("MeshPart")) then
+            -- Điều kiện lọc: Quặng phải hiển thị và có thể tác động
+            if object.Transparency < 1 then
+                targetOre = object
+                break
+            end
+        end
+    end
+
+    if targetOre then
+        isTeleporting = true
+        
+        -- 1. Lưu vị trí cũ
+        local originalPosition = humanoidRootPart.CFrame
+        
+        -- 2. Dịch chuyển thẳng tới tâm quặng (hạ thấp xuống một chút để chạm hẳn vào quặng)
+        humanoidRootPart.CFrame = targetOre.CFrame * CFrame.new(0, 1, 0)
+        
+        -- 3. HỆ THỐNG TỰ ĐỘNG NHẶT (Tích hợp 3 chế độ game phổ biến)
+        task.spawn(function()
+            local startTime = os.clock()
+            while os.clock() - startTime < 2.5 do
+                -- Cách 1: Nếu game dùng nút "E" (ProximityPrompt) -> Tự động kích hoạt nút E
+                local prompt = targetOre:FindFirstChildOfClass("ProximityPrompt") or targetOre.Parent:FindFirstChildOfClass("ProximityPrompt")
+                if prompt then
+                    fireproximityprompt(prompt)
+                end
+                
+                -- Cách 2: Nếu game dùng Click chuột (ClickDetector) -> Tự động click vào quặng
+                local clickDetector = targetOre:FindFirstChildOfClass("ClickDetector") or targetOre.Parent:FindFirstChildOfClass("ClickDetector")
+                if clickDetector then
+                    fireclickdetector(clickDetector)
+                end
+                
+                -- Cách 3: Nếu game bắt đi xuyên qua quặng để nhặt -> Cho nhân vật rung nhẹ để kích hoạt Touch
+                humanoidRootPart.CFrame = targetOre.CFrame * CFrame.new(0, math.sin(os.clock()*10)*0.5, 0)
+                
+                task.wait(0.1) -- Lặp lại liên tục sau mỗi 0.1 giây để nhặt chắc chắn trúng
+            end
+        end)
+        
+        Rayfield:Notify({
+            Name = "KienManhX",
+            Content = "Đang tự động nhặt " .. oreName .. "... (2.5s)",
+            Duration = 2.5,
+            Image = 4483362458,
+        })
+        
+        -- Đợi đúng 2.5 giây như yêu cầu
+        task.wait(2.5)
+        
+        -- 4. Quay trở về vị trí cũ ban đầu
+        humanoidRootPart.CFrame = originalPosition
+        
+        Rayfield:Notify({
+            Name = "KienManhX",
+            Content = "Đã thu hoạch xong và quay về!",
+            Duration = 1.5,
+            Image = 4483362458,
+        })
+        
+        isTeleporting = false
+    else
+        Rayfield:Notify({
+            Name = "KienManhX",
+            Content = "Không quét thấy cục " .. oreName .. " nào!",
+            Duration = 2,
+            Image = 4483362458,
+        })
+    end
+end
+
+---
+-- GIAO DIỆN NÚT BẤM
+---
+Tab:CreateButton({
+   Name = "Gold",
+   Callback = function()
+       teleportAndAutoCollect("Gold")
+   end,
+})
+
+Tab:CreateButton({
+   Name = "Diamond",
+   Callback = function()
+       teleportAndAutoCollect("Diamond")
+   end,
+})
+
+Tab:CreateButton({
+   Name = "Emerald",
+   Callback = function()
+       teleportAndAutoCollect("Emerald")
+   end,
+})
