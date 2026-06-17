@@ -213,7 +213,7 @@ local Button = MainTab:CreateButton({
 
 -- [TAB HỆ THỐNG ESP]
 local ToggleEspPlayer = EspTab:CreateToggle({
-   Name = "EspPlayer (Hiện Tên + Viền Xanh)",
+   Name = "EspPlayer",
    CurrentValue = false,
    Flag = "EspPlayerToggle",
    Callback = function(Value)
@@ -223,7 +223,7 @@ local ToggleEspPlayer = EspTab:CreateToggle({
 })
 
 local ToggleEspNpc = EspTab:CreateToggle({
-   Name = "EspNpc (Hiện Tên Quái + Viền Đỏ)",
+   Name = "EspNpc",
    CurrentValue = false,
    Flag = "EspNpcToggle",
    Callback = function(Value)
