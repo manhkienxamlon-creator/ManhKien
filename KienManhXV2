@@ -1,0 +1,129 @@
+-- Tải thư viện Rayfield mới nhất
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source.lua'))()
+
+-- Tạo Window giao diện
+local Window = Rayfield:CreateWindow({
+   Name = "KienManhX | Auto Loot Server",
+   LoadingTitle = "Đang tải KienManhX...",
+   LoadingSubtitle = "by ManhKienX",
+   ConfigurationSaving = { Enabled = false },
+   Discord = { Enabled = false },
+   KeySystem = false
+})
+
+-- Biến bật/tắt và biến lưu vị trí
+_G.AutoLoot = false
+local SavedCFrame = nil 
+
+-- Tạo Tab Chức Năng
+local MainTab = Window:CreateTab("Chức Năng", 4483362458)
+
+-- Hàm lọc danh sách vật phẩm mục tiêu
+local function IsTargetItem(item)
+    local name = string.lower(item.Name)
+    return name == "gold" or name == "diamond" or name == "emerald"
+end
+
+-- Hàm quét và nhặt đồ chính xác
+local function BatDauNhatDo()
+    while _G.AutoLoot do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local rootPart = character:WaitForChild("HumanoidRootPart", 5)
+        
+        if rootPart then
+            -- Quét toàn bộ server
+            for _, item in ipairs(workspace:GetDescendants()) do
+                if not _G.AutoLoot then break end
+                
+                -- KIỂU 1: Vật phẩm chạm để nhặt (BasePart)
+                if item:IsA("BasePart") and IsTargetItem(item) then
+                    if item.Parent and not item:IsDescendantOf(player.Character) then
+                        rootPart.CFrame = item.CFrame
+                        task.wait(0.5) -- Chờ đúng 0.5 giây rồi chuyển sang cái khác
+                    end
+                    
+                -- KIỂU 2: Vật phẩm có nút bấm ProximityPrompt ở bên trong
+                elseif item:IsA("ProximityPrompt") and item.Parent and IsTargetItem(item.Parent) then
+                    local parentPart = item.Parent
+                    if parentPart:IsA("BasePart") then
+                        rootPart.CFrame = parentPart.CFrame + Vector3.new(0, 2, 0)
+                        task.wait(0.1)
+                        
+                        -- Kích hoạt nhặt nút E
+                        if fireproximityprompt then
+                            fireproximityprompt(item)
+                        else
+                            item:InputHoldBegin()
+                            task.wait(item.HoldDuration)
+                            item:InputHoldEnd()
+                        end
+                        task.wait(0.5) -- Chờ đúng 0.5 giây rồi chuyển sang cái khác
+                    end
+                end
+            end
+        end
+        task.wait(0.2) -- Thời gian nghỉ rất ngắn giữa các đợt quét toàn server
+    end
+end
+
+-- Nút Bật/Tắt trên Menu
+local Toggle = MainTab:CreateToggle({
+   Name = "Auto Nhặt Gold/Diamond/Emerald (0.5s)",
+   CurrentValue = false,
+   Flag = "AutoLootFilterToggle",
+   Callback = function(Value)
+      _G.AutoLoot = Value
+      local player = game.Players.LocalPlayer
+      local rootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+      
+      if Value then
+          -- Lưu lại vị trí ngay khi bấm BẬT
+          if rootPart then 
+              SavedCFrame = rootPart.CFrame 
+          end
+          
+          task.spawn(BatDauNhatDo)
+          Rayfield:Notify({
+             Title = "ManhKienX",
+             Content = "Đã BẬT và lưu vị trí hiện tại!",
+             Duration = 2,
+             Image = 4483362458,
+          })
+      else
+          Rayfield:Notify({
+             Title = "ManhKienX",
+             Content = "Đã TẮT tự động nhặt.",
+             Duration = 2,
+             Image = 4483362458,
+          })
+      end
+   end,
+})
+
+-- NÚT BẤM RIÊNG ĐỂ QUAY VỀ CHỖ CŨ
+local Button = MainTab:CreateButton({
+   Name = "Quay Về Vị Trí Cũ 📍",
+   Callback = function()
+      local player = game.Players.LocalPlayer
+      local rootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+      
+      if SavedCFrame and rootPart then
+          rootPart.CFrame = SavedCFrame
+          Rayfield:Notify({
+             Title = "ManhKienX",
+             Content = "Đã dịch chuyển bạn về vị trí cũ thành công!",
+             Duration = 2,
+             Image = 4483362458,
+          })
+      else
+          Rayfield:Notify({
+             Title = "ManhKienX",
+             Content = "Chưa có vị trí được lưu! Hãy bật Auto nhặt trước.",
+             Duration = 2,
+             Image = 4483362458,
+          })
+      end
+   end,
+})
+
