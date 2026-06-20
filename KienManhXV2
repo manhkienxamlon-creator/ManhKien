@@ -5,7 +5,7 @@ local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/Siri
 local Window = Rayfield:CreateWindow({
    Name = "KienManhX | Auto Loot & Ultra ESP",
    LoadingTitle = "Đang tải KienManhX V2...",
-   LoadingSubtitle = "by ManhKienX",
+   LoadingSubtitle = "by ManhKienX,rhzqham358",
    ConfigurationSaving = { Enabled = false },
    KeySystem = false
 })
@@ -16,12 +16,13 @@ _G.EspPlayer = false
 _G.EspNpc = false
 local SavedCFrame = nil 
 
--- Tạo Tab Chức Năng và Tab ESP
+-- Tạo Tab
 local MainTab = Window:CreateTab("Chức Năng", 4483362458)
 local EspTab = Window:CreateTab("Hệ Thống ESP", 4483362458)
+local TpTab = Window:CreateTab("TP Player", 4483362458)
 
 -- ==========================================
--- LOGIC AUTO LOOT (GIỮ NGUYÊN THEO YÊU CẦU)
+-- LOGIC AUTO LOOT
 -- ==========================================
 local function IsTargetItem(item)
     local name = string.lower(item.Name)
@@ -33,11 +34,9 @@ local function BatDauNhatDo()
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local rootPart = character:WaitForChild("HumanoidRootPart", 5)
-        
         if rootPart then
             for _, item in ipairs(workspace:GetDescendants()) do
                 if not _G.AutoLoot then break end
-                
                 if item:IsA("BasePart") and IsTargetItem(item) then
                     if item.Parent and not item:IsDescendantOf(player.Character) then
                         rootPart.CFrame = item.CFrame
@@ -48,13 +47,7 @@ local function BatDauNhatDo()
                     if parentPart:IsA("BasePart") then
                         rootPart.CFrame = parentPart.CFrame + Vector3.new(0, 2, 0)
                         task.wait(0.1)
-                        if fireproximityprompt then
-                            fireproximityprompt(item)
-                        else
-                            item:InputHoldBegin()
-                            task.wait(item.HoldDuration)
-                            item:InputHoldEnd()
-                        end
+                        if fireproximityprompt then fireproximityprompt(item) else item:InputHoldBegin(); task.wait(item.HoldDuration); item:InputHoldEnd() end
                         task.wait(0.5)
                     end
                 end
@@ -65,17 +58,13 @@ local function BatDauNhatDo()
 end
 
 -- ==========================================
--- LOGIC HỆ THỐNG ESP TEXT + HIGHLIGHT NÂNG CAO
+-- LOGIC ESP
 -- ==========================================
-
--- Hàm tạo Text tên và Khoảng cách cho Quái/Người
 local function CreateTag(model, text, color)
     local head = model:FindFirstChild("Head") or model:FindFirstChildWhichIsA("BasePart")
     if not head then return end
-    
     local oldTag = model:FindFirstChild("KienManhX_NameTag")
     if oldTag then oldTag:Destroy() end
-    
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "KienManhX_NameTag"
     billboard.AlwaysOnTop = true
@@ -83,7 +72,6 @@ local function CreateTag(model, text, color)
     billboard.StudsOffset = Vector3.new(0, 3, 0)
     billboard.Adornee = head
     billboard.Parent = model
-    
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 1, 0)
     label.BackgroundTransparency = 1
@@ -91,17 +79,13 @@ local function CreateTag(model, text, color)
     label.TextColor3 = color
     label.TextSize = 14
     label.Font = Enum.Font.SourceSansBold
-    label.TextStrokeTransparency = 0 -- Làm chữ có viền đen dễ nhìn hơn
+    label.TextStrokeTransparency = 0
     label.Parent = billboard
-    
     return label
 end
 
--- Hàm áp dụng ESP tổng hợp
 local function ApplyESP(model, color, toggleVariable, isPlayer)
     if not model:FindFirstChildOfClass("Humanoid") then return end
-    
-    -- 1. Xử lý phần Highlight (Vòng viền)
     local highlight = model:FindFirstChild("KienManhX_Highlight")
     if _G[toggleVariable] then
         if not highlight then
@@ -118,116 +102,80 @@ local function ApplyESP(model, color, toggleVariable, isPlayer)
         if tag then tag:Destroy() end
         return
     end
-    
-    -- 2. Xử lý phần hiển thị Tên và Khoảng cách cập nhật liên tục
     local localPlayer = game.Players.LocalPlayer
     local root = model:FindFirstChild("HumanoidRootPart")
     local myRoot = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
-    
     if root and myRoot then
         local distance = math.floor((root.Position - myRoot.Position).Magnitude)
         local displayName = isPlayer and model.Name or "[NPC] " .. model.Name
         local label = model:FindFirstChild("KienManhX_NameTag") and model["KienManhX_NameTag"]:FindFirstChildOfClass("TextLabel")
-        
-        if not label then
-            label = CreateTag(model, displayName .. " [" .. distance .. "m]", color)
-        else
-            label.Text = displayName .. " [" .. distance .. "m]"
-        end
+        if not label then label = CreateTag(model, displayName .. " [" .. distance .. "m]", color) else label.Text = displayName .. " [" .. distance .. "m]" end
     end
 end
 
--- Vòng lặp quét sâu diện rộng toàn bộ Workspace để tìm Quái ẩn
 task.spawn(function()
-    while task.wait(0.5) do -- Quét nhanh hơn (0.5s/lần) để quái hồi sinh là thấy ngay
+    while task.wait(0.5) do
         local localPlayer = game.Players.LocalPlayer
-        
         for _, obj in ipairs(workspace:GetDescendants()) do
             if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj ~= localPlayer.Character then
                 local playerInstance = game.Players:GetPlayerFromCharacter(obj)
-                
-                if playerInstance then
-                    -- ĐỐI TƯỢNG LÀ NGƯỜI CHƠI
-                    ApplyESP(obj, Color3.fromRGB(0, 150, 255), "EspPlayer", true) -- Màu Xanh Dương
-                else
-                    -- ĐỐI TƯỢNG LÀ NPC / QUÁI VẬT
-                    ApplyESP(obj, Color3.fromRGB(255, 20, 20), "EspNpc", false) -- Màu Đỏ Rực
-                end
+                if playerInstance then ApplyESP(obj, Color3.fromRGB(0, 150, 255), "EspPlayer", true) else ApplyESP(obj, Color3.fromRGB(255, 20, 20), "EspNpc", false) end
             end
         end
     end
 end)
 
--- Hàm dọn sạch ESP khi tắt nút dữ liệu tránh lag game
 local function ClearESP(toggleVariable)
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj.Name == "KienManhX_Highlight" or obj.Name == "KienManhX_NameTag" then
             local parentModel = obj.Parent
             if parentModel and parentModel:IsA("Model") then
                 local isPlayer = game.Players:GetPlayerFromCharacter(parentModel)
-                if (isPlayer and toggleVariable == "EspPlayer") or (not isPlayer and toggleVariable == "EspNpc") then
-                    obj:Destroy()
-                end
+                if (isPlayer and toggleVariable == "EspPlayer") or (not isPlayer and toggleVariable == "EspNpc") then obj:Destroy() end
             end
         end
     end
 end
 
 -- ==========================================
--- GIAO DIỆN MENU RAYFIELD
+-- GIAO DIỆN
 -- ==========================================
-
--- [TAB CHỨC NĂNG]
-local Toggle = MainTab:CreateToggle({
-   Name = "Auto Nhặt Gold/Diamond/Emerald (0.5s)",
+MainTab:CreateToggle({
+   Name = "Auto Loot",
    CurrentValue = false,
-   Flag = "AutoLootFilterToggle",
    Callback = function(Value)
       _G.AutoLoot = Value
-      local player = game.Players.LocalPlayer
-      local rootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-      
-      if Value then
-          if rootPart then SavedCFrame = rootPart.CFrame end
-          task.spawn(BatDauNhatDo)
-          Rayfield:Notify({Title = "ManhKienX", Content = "Đã BẬT và lưu vị trí hiện tại!", Duration = 2})
-      else
-          Rayfield:Notify({Title = "ManhKienX", Content = "Đã TẮT tự động nhặt.", Duration = 2})
-      end
+      local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+      if Value then if root then SavedCFrame = root.CFrame end; task.spawn(BatDauNhatDo) end
    end,
 })
 
-local Button = MainTab:CreateButton({
-   Name = "Quay Về Vị Trí Cũ 📍",
+MainTab:CreateButton({ Name = "Quay Về Vị Trí Cũ 📍", Callback = function() local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") if SavedCFrame and root then root.CFrame = SavedCFrame end end })
+
+EspTab:CreateToggle({ Name = "EspPlayer", CurrentValue = false, Callback = function(Value) _G.EspPlayer = Value; if not Value then ClearESP("EspPlayer") end end })
+EspTab:CreateToggle({ Name = "EspNpc", CurrentValue = false, Callback = function(Value) _G.EspNpc = Value; if not Value then ClearESP("EspNpc") end end })
+
+EspTab:CreateToggle({
+    Name = "Fullbright",
+    CurrentValue = false,
+    Callback = function(Value)
+        local Lighting = game:GetService("Lighting")
+        if Value then Lighting.Brightness = 3; Lighting.ClockTime = 12; Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255); Lighting.FogEnd = 999999
+        else Lighting.Brightness = 1; Lighting.ClockTime = 12; Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127); Lighting.FogEnd = 10000 end
+    end,
+})
+
+local TargetPlayerName = ""
+TpTab:CreateInput({ Name = "Nhập tên", PlaceholderText = "Ví dụ: Kien...", Callback = function(Text) TargetPlayerName = Text end })
+TpTab:CreateButton({
+   Name = "Xác nhận & Dịch chuyển",
    Callback = function()
-      local player = game.Players.LocalPlayer
-      local rootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-      if SavedCFrame and rootPart then
-          rootPart.CFrame = SavedCFrame
-          Rayfield:Notify({Title = "ManhKienX", Content = "Đã dịch chuyển về vị trí cũ!", Duration = 2})
-      else
-          Rayfield:Notify({Title = "ManhKienX", Content = "Chưa có vị trí được lưu!", Duration = 2})
+      local searchName = string.lower(TargetPlayerName)
+      for _, player in pairs(game.Players:GetPlayers()) do
+         if string.find(string.lower(player.Name), searchName) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame
+            break
+         end
       end
-   end,
-})
-
--- [TAB HỆ THỐNG ESP]
-local ToggleEspPlayer = EspTab:CreateToggle({
-   Name = "EspPlayer",
-   CurrentValue = false,
-   Flag = "EspPlayerToggle",
-   Callback = function(Value)
-      _G.EspPlayer = Value
-      if not Value then ClearESP("EspPlayer") end
-   end,
-})
-
-local ToggleEspNpc = EspTab:CreateToggle({
-   Name = "EspNpc",
-   CurrentValue = false,
-   Flag = "EspNpcToggle",
-   Callback = function(Value)
-      _G.EspNpc = Value
-      if not Value then ClearESP("EspNpc") end
    end,
 })
