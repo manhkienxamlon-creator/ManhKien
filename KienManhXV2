@@ -138,7 +138,7 @@ local function ClearESP(toggleVariable)
 end
 
 -- ==========================================
--- GIAO DIỆN
+-- GIAO DIỆN (CHỨC NĂNG CHÍNH)
 -- ==========================================
 MainTab:CreateToggle({
    Name = "Auto Loot",
@@ -150,8 +150,55 @@ MainTab:CreateToggle({
    end,
 })
 
+-- NÚT DỊCH CHUYỂN ĐẾN MÁY BÁN PHẾ LIỆU (ĐỨNG TRÊN NÓC MÁY)
+MainTab:CreateButton({
+   Name = "Dịch chuyển tới Máy Scrap 🤖",
+   Callback = function()
+      local player = game.Players.LocalPlayer
+      local character = player.Character
+      local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+      
+      if rootPart then
+         -- Lưu lại vị trí cũ để có thể quay về
+         SavedCFrame = rootPart.CFrame
+         
+         local foundMachine = false
+         for _, obj in ipairs(workspace:GetDescendants()) do
+            -- Tìm kiếm các BasePart hoặc Model có tên chứa chữ "scrap"
+            if (obj:IsA("BasePart") or obj:IsA("Model")) and string.find(string.lower(obj.Name), "scrap") then
+               -- Xác định vị trí cụ thể của cỗ máy
+               local targetCFrame
+               if obj:IsA("Model") then
+                  targetCFrame = obj:GetPivot()
+               else
+                  targetCFrame = obj.CFrame
+               end
+               
+               -- Dịch chuyển lên trên đầu cỗ máy (cộng thêm 4.5 block chiều cao để đứng trên nóc)
+               rootPart.CFrame = targetCFrame * CFrame.new(0, 4.5, 0)
+               foundMachine = true
+               break
+            end
+         end
+         
+         -- Nếu không quét được tên tự động, thông báo lỗi cho người chơi
+         if not foundMachine then
+            Rayfield:Notify({
+               Title = "Hệ thống",
+               Content = "Không tìm thấy Máy bán phế liệu nào trên bản đồ!",
+               Duration = 3,
+               Image = 4483362458,
+            })
+         end
+      end
+   end,
+})
+
 MainTab:CreateButton({ Name = "Quay Về Vị Trí Cũ 📍", Callback = function() local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") if SavedCFrame and root then root.CFrame = SavedCFrame end end })
 
+-- ==========================================
+-- CÁC TAB CÒN LẠI
+-- ==========================================
 EspTab:CreateToggle({ Name = "EspPlayer", CurrentValue = false, Callback = function(Value) _G.EspPlayer = Value; if not Value then ClearESP("EspPlayer") end end })
 EspTab:CreateToggle({ Name = "EspNpc", CurrentValue = false, Callback = function(Value) _G.EspNpc = Value; if not Value then ClearESP("EspNpc") end end })
 
