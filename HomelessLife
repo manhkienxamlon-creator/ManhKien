@@ -1,0 +1,150 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Homeless Life",
+   LoadingTitle = "Đang tải Script...",
+   LoadingSubtitle = "By BanhQuy2212014",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "HomelessLifeConfig",
+      FileName = "MenuConfig"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "",
+      RememberJoins = true
+   },
+   KeySystem = false
+})
+
+-- Tạo Tab Chức Năng
+local MainTab = Window:CreateTab("Chức Năng", 4483362458)
+
+---
+-- 1. TÍNH NĂNG SPEED (1 - 30)
+---
+local WalkSpeedValue = 16 
+MainTab:CreateSlider({
+   Name = "Speed",
+   Range = {1, 30},
+   Increment = 1,
+   CurrentValue = 16,
+   Flag = "SpeedSlider",
+   Callback = function(Value)
+      WalkSpeedValue = Value
+   end,
+})
+
+task.spawn(function()
+    while task.wait(0.1) do
+        pcall(function()
+            local player = game.Players.LocalPlayer
+            if player and player.Character and player.Character:FindFirstChild("Humanoid") then
+                player.Character.Humanoid.WalkSpeed = WalkSpeedValue
+            end
+        end)
+    end
+end)
+
+---
+-- 2. TÍNH NĂNG HITBOX (1 - 7)
+---
+local HitboxSize = 2 
+MainTab:CreateSlider({
+   Name = "Hitbox",
+   Range = {1, 7},
+   Increment = 0.5,
+   CurrentValue = 2,
+   Flag = "HitboxSlider",
+   Callback = function(Value)
+      HitboxSize = Value
+   end,
+})
+
+task.spawn(function()
+    while task.wait(0.5) do
+        pcall(function()
+            local localPlayer = game.Players.LocalPlayer
+            for _, player in ipairs(game.Players:GetPlayers()) do
+                if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = player.Character.HumanoidRootPart
+                    hrp.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+                    hrp.Transparency = 0.7 
+                    hrp.BrickColor = BrickColor.new("Really red")
+                    hrp.CanCollide = false
+                end
+            end
+        end)
+    end
+end)
+
+---
+-- 3. TÍNH NĂNG ESP TÊN (Màu đỏ nhạt)
+---
+local ESPEnabled = false
+
+local function createESP(player)
+    if player == game.Players.LocalPlayer then return end
+    
+    local function setupESP(character)
+        if not character then return end
+        local head = character:WaitForChild("Head", 5)
+        if not head then return end
+        
+        if head:FindFirstChild("EspNameTag") then
+            head.EspNameTag:Destroy()
+        end
+        
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "EspNameTag"
+        billboard.AlwaysOnTop = true
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.StudsOffset = Vector3.new(0, 2.5, 0) 
+        billboard.Parent = head
+        
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.Text = player.Name
+        textLabel.TextColor3 = Color3.fromRGB(255, 102, 102) -- Đỏ nhạt
+        textLabel.TextSize = 14
+        textLabel.TextStrokeTransparency = 0.5 
+        textLabel.Font = Enum.Font.SourceSansBold
+        textLabel.Parent = billboard
+        
+        billboard.Enabled = ESPEnabled
+    end
+    
+    player.CharacterAdded:Connect(setupESP)
+    if player.Character then setupESP(player.Character) end
+end
+
+for _, player in ipairs(game.Players:GetPlayers()) do
+    createESP(player)
+end
+game.Players.PlayerAdded:Connect(createESP)
+
+MainTab:CreateToggle({
+   Name = "ESP",
+   CurrentValue = false,
+   Flag = "EspToggle",
+   Callback = function(Value)
+      ESPEnabled = Value
+      for _, player in ipairs(game.Players:GetPlayers()) do
+          if player.Character and player.Character:FindFirstChild("Head") then
+              local tag = player.Character.Head:FindFirstChild("EspNameTag")
+              if tag then
+                  tag.Enabled = ESPEnabled
+              end
+          end
+      end
+   end,
+})
+
+-- Thông báo kích hoạt thành công
+Rayfield:Notify({
+   Title = "Homeless Life",
+   Content = "Menu đã được kích hoạt bởi BanhQuy2212014!",
+   Duration = 5,
+   Image = 4483362458,
+})
